@@ -1,0 +1,15 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.kylin.skycam.WebViewActivity">
+    <item
+        android:id="@+id/action_GridView"
+        android:title="@string/action_GridView"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_webView"
+        android:title="@string/action_webView"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+</menu>
