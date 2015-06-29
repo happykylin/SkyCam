@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.kylin.skycam">
+    package="com.example.kylin.skycam" >
 
     <uses-permission android:name="android.permission.CAMERA" />
 
@@ -10,16 +10,15 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CHANGE_CONFIGURATION" />
-
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme" >
         <activity
-
             android:name=".MainActivity"
-            android:label="@string/app_name">
+            android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,12 +27,18 @@
         </activity>
         <activity
             android:name=".WebViewActivity"
-            android:label="@string/title_activity_web_view"></activity>
+            android:label="@string/title_activity_web_view" />
         <activity
             android:name=".GridViewActivity"
-            android:label="@string/title_activity_inten_view"></activity>
+            android:label="@string/title_activity_grid_view" />
+        <activity
+            android:name=".JSONActivity"
+            android:label="@string/title_activity_json" >
+        </activity>
+        <activity
+            android:name=".CacheActivity"
+            android:label="@string/title_activity_cache" >
+        </activity>
     </application>
 
 </manifest>
-
-

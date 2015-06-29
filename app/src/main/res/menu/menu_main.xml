@@ -13,8 +13,13 @@
         android:orderInCategory="100"
         app:showAsAction="never" />
     <item
-        android:id="@+id/action_IntentView"
-        android:title="@string/action_IntentView"
+        android:id="@+id/action_JSONView"
+        android:title="@string/action_JSON"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/action_CacheView"
+        android:title="@string/action_Cache"
         android:orderInCategory="100"
         app:showAsAction="never" />
 </menu>

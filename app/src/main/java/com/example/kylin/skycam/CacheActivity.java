@@ -1,11 +1,14 @@
 package com.example.kylin.skycam;
 
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
+import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -21,8 +24,14 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
+import org.apache.http.util.ByteArrayBuffer;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -31,45 +40,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class GridViewActivity extends Activity {
+public class CacheActivity extends ActionBarActivity {
     static ImageAdapter gridadapter;
     String ip;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_grid_view);
+        setContentView(R.layout.activity_cache);
 
-//        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-//                Environment.DIRECTORY_PICTURES), "MyCameraApp");
-
-        Bundle bundle = getIntent().getExtras();
-        String picdir = bundle.getString(getResources().getString(R.string.PictureDir));
         ip = getResources().getString(R.string.ip);
         gridadapter = new ImageAdapter(this);
         GridView gridview = (GridView) findViewById(R.id.gridView);
         gridview.setNumColumns(3);
         gridview.setAdapter(gridadapter);
-
-        //TODO get total url from php server
-//        new AsyncTask<String,Void,Boolean>(){
-//
-//            @Override
-//            protected Boolean doInBackground(String... params) {
-//                String serUrl = "http://" + ip + "/getUrl.php";
-//                String result = getfilename(serUrl);
-//                gridadapter.mThumbIds = result.split(" ");
-//
-//                return true;
-//            }
-//
-//            @Override
-//            protected void onPostExecute(Boolean result){
-//                if(result){
-//                    gridadapter.notifyDataSetChanged();
-//                }
-//            }
-//        }.execute();
 
 
     }//end oncreate
@@ -96,10 +79,12 @@ public class GridViewActivity extends Activity {
     public class ImageAdapter extends BaseAdapter {
         private Context mContext;
         private boolean update;
+        int downloadInd;
 
         public ImageAdapter(Context c) {
             mContext = c;
             update = false;
+            downloadInd=0;
         }
 
         public int getCount() {
@@ -114,15 +99,7 @@ public class GridViewActivity extends Activity {
             return 0;
         }
 
-        public void setView(Bitmap bitmap) {
-            ImageView imageView;
-            // if it's not recycled, initialize some attributes
-            imageView = new ImageView(mContext);
-            imageView.setLayoutParams(new GridView.LayoutParams(85, 85));
-            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            imageView.setPadding(8, 8, 8, 8);
-            imageView.setImageBitmap(bitmap);
-        }
+
 
         // create a new ImageView for each item referenced by the Adapter
         public View getView(final int position, View convertView, ViewGroup parent) {
@@ -138,27 +115,42 @@ public class GridViewActivity extends Activity {
             }
 
 
-            new AsyncTask<String, Void, Bitmap>() {
-                @Override
-                protected Bitmap doInBackground(String... params) {
-//                    String dirurl="http://192.168.1.142/upload_sky/";
 
+            new AsyncTask<String, Void, Uri>() {
+                @Override
+                protected Uri doInBackground(String... params) {
+//                    String dirurl="http://192.168.1.142/upload_sky/";
+                    String dir= "upload_sky_compre/";
                     if (!update) {
-                        String serUrl = "http://" + ip + "/getUrl.php";
+                        //TODO Cache store
+                        String serUrl = "http://" + ip + "/getUrl_JSON.php";
                         String result = getfilename(serUrl);
-                        mThumbIds = result.split(" ");
+                        String filename ="";
+                        JSONObject obj;
+                        try {
+                            JSONArray jsonArray = new JSONArray(result);
+                            for(int i=0;i<jsonArray.length();i++){
+                                obj = jsonArray.getJSONObject(i);
+                                filename= obj.getString("name");
+                                UriList.add(getFileUri("http://" + ip + "/" + dir + filename, filename));
+                            }
+
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+                        mThumbIds = filename.split(" ");
                         update = true;
                     }
 
-
-                    return getBitmapFromURL("http://" + ip + "/" + mThumbIds[position]);
+                    return UriList.get(position);
+                    //return getBitmapFromURL("http://" + ip + "/"+dir + mThumbIds[position]);
                 }
 
                 @Override
-                protected void onPostExecute(Bitmap result) {
+                protected void onPostExecute(Uri result) {
                     //TODO OOM
 
-                    imageView.setImageBitmap(result);
+                    imageView.setImageURI(result);
                     super.onPostExecute(result);
 //                    if(!result.isRecycled()){
 //                        result.recycle();
@@ -172,10 +164,55 @@ public class GridViewActivity extends Activity {
 
         // references to our images
         //"http://"+ip+"/upload_sky/IMG_20150313_134714.jpg";
+        private  ArrayList<Uri> UriList = new ArrayList<>();
+
         private String[] mThumbIds = {
                 ""
         };
+
+        private Uri getFileUri(String fileUrl, String filename){
+
+//            File CacheDir = new File(getApplicationContext().getCacheDir(),getResources().getString(R.string.app_name));
+            File CacheDir = new File(Environment.getExternalStoragePublicDirectory(
+                    Environment.DIRECTORY_PICTURES),getResources().getString(R.string.app_name));
+
+            if (!CacheDir.exists()) {
+                if (!CacheDir.mkdirs()) {
+                    Log.d("SkyCam", "failed to create directory");
+                    return null;
+                }
+            }
+            File FileTemp = new File(CacheDir.getPath() + File.separator + filename);
+            Uri uritmep;
+
+            try {
+                //outputStream = openFileOutput(filename,Context.MODE_PRIVATE);
+                URL url = new URL(fileUrl);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setDoInput(true);
+                connection.connect();
+
+                InputStream input = connection.getInputStream();    //get input stream
+                BufferedInputStream bis = new BufferedInputStream(input);   //read in buffer stream
+
+                ByteArrayBuffer baf = new ByteArrayBuffer(50);
+                int current =0 ;
+                while ((current= bis.read()) != -1){
+                    baf.append((byte)current);
+                }
+                FileOutputStream fos = new FileOutputStream(FileTemp);
+                fos.write(baf.toByteArray());
+                fos.close();
+
+            }catch (IOException e){
+                e.printStackTrace();
+            }
+            return Uri.parse(FileTemp.getAbsolutePath());
+        }
     }
+
+
+
 
     private static Bitmap getBitmapFromURL(String imageUrl) {
         try {
@@ -188,10 +225,12 @@ public class GridViewActivity extends Activity {
 
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = false;
-//            options.inSampleSize = 5;
+
+//            File mediaStorageDir = new File(Environment.getDownloadCacheDirectory(), "SkyCam");
+//            FileOutputStream outputStream= new FileOutputStream()
+//
 
             return BitmapFactory.decodeStream(input, null, options);
-//            return Bitmap.createBitmap();
 //            return BitmapFactory.decodeStream(input);
             //直接調用JNI>>nativeDecodeAsset()來完成decode，無需再使用java層的createBitmap，從而節省了java層的空間。
         } catch (IOException e) {
@@ -201,10 +240,11 @@ public class GridViewActivity extends Activity {
         }
     }
 
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_inten_view, menu);
+        getMenuInflater().inflate(R.menu.menu_cache, menu);
         return true;
     }
 
@@ -216,7 +256,7 @@ public class GridViewActivity extends Activity {
         int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_GridView) {
+        if (id == R.id.action_settings) {
             return true;
         }
 

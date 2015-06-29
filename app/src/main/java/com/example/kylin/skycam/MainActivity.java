@@ -43,7 +43,7 @@ import java.util.Date;
 
 public class MainActivity extends ActionBarActivity {
     private String ip;
-    private String uploadUrl = "http://" + getResources().getString(R.string.ip) + "/upload_sky.php";
+    private String uploadUrl ;
     ProgressDialog dialog = null;
     Button CamB, SettingB;
     ImageButton imgtake;
@@ -59,7 +59,7 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
+        uploadUrl = "http://" + getResources().getString(R.string.ip) + "/upload_sky.php";
         CamB = (Button) findViewById(R.id.CamB);
         SettingB = (Button) findViewById(R.id.setting);
         imgtake = (ImageButton) findViewById(R.id.imageButton);
@@ -510,24 +510,34 @@ public class MainActivity extends ActionBarActivity {
         int id = item.getItemId();
         Intent intent = new Intent();
         //noinspection SimplifiableIfStatement
-        if (id == R.id.action_GridView) {
-
-//            intent.setClass(this, WebViewActivity.class);
-            intent.setClass(this, GridViewActivity.class);
-            File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-                    Environment.DIRECTORY_PICTURES), "MyCameraApp");
-            Bundle bundle = new Bundle();
-            bundle.putString(getResources().getString(R.string.PictureDir), mediaStorageDir.getPath());
-            intent.putExtras(bundle);
+        switch (id){
+            case R.id.action_GridView:
+                intent.setClass(this, GridViewActivity.class);
+                File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
+                        Environment.DIRECTORY_PICTURES), "MyCameraApp");
+                Bundle bundle = new Bundle();
+                bundle.putString(getResources().getString(R.string.PictureDir), mediaStorageDir.getPath());
+                intent.putExtras(bundle);
 
 //            startActivityForResult(intent,getResources().getInteger(R.integer.MainRequest));
-            startActivity(intent);
+                startActivity(intent);
 //            Cam =null;
-        } else if (id == R.id.action_webView) {
-
-            intent.setClass(this, WebViewActivity.class);
-            startActivity(intent);
+                break;
+            case  R.id.action_webView:
+                intent.setClass(this, WebViewActivity.class);
+                startActivity(intent);
+                break;
+            case  R.id.action_JSONView:
+                intent.setClass(this, JSONActivity.class);
+                startActivity(intent);
+                break;
+            case R.id.action_CacheView:
+                intent.setClass(this,CacheActivity.class);
+                startActivity(intent);
+            default:
+                break;
         }
+
 
         return super.onOptionsItemSelected(item);
     }

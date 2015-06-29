@@ -22,6 +22,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,45 +33,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class GridViewActivity extends Activity {
+public class JSONActivity extends Activity {
     static ImageAdapter gridadapter;
     String ip;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_grid_view);
+        setContentView(R.layout.activity_json);
 
-//        File mediaStorageDir = new File(Environment.getExternalStoragePublicDirectory(
-//                Environment.DIRECTORY_PICTURES), "MyCameraApp");
-
-        Bundle bundle = getIntent().getExtras();
-        String picdir = bundle.getString(getResources().getString(R.string.PictureDir));
         ip = getResources().getString(R.string.ip);
         gridadapter = new ImageAdapter(this);
         GridView gridview = (GridView) findViewById(R.id.gridView);
         gridview.setNumColumns(3);
         gridview.setAdapter(gridadapter);
-
-        //TODO get total url from php server
-//        new AsyncTask<String,Void,Boolean>(){
-//
-//            @Override
-//            protected Boolean doInBackground(String... params) {
-//                String serUrl = "http://" + ip + "/getUrl.php";
-//                String result = getfilename(serUrl);
-//                gridadapter.mThumbIds = result.split(" ");
-//
-//                return true;
-//            }
-//
-//            @Override
-//            protected void onPostExecute(Boolean result){
-//                if(result){
-//                    gridadapter.notifyDataSetChanged();
-//                }
-//            }
-//        }.execute();
 
 
     }//end oncreate
@@ -142,16 +119,30 @@ public class GridViewActivity extends Activity {
                 @Override
                 protected Bitmap doInBackground(String... params) {
 //                    String dirurl="http://192.168.1.142/upload_sky/";
-
+                    String dir= "upload_sky_compre/";
                     if (!update) {
-                        String serUrl = "http://" + ip + "/getUrl.php";
+                        //TODO JSON format
+                        String serUrl = "http://" + ip + "/getUrl_JSON.php";
+
                         String result = getfilename(serUrl);
-                        mThumbIds = result.split(" ");
+                        String filename ="";
+                        JSONObject obj;
+                        try {
+                            JSONArray jsonArray = new JSONArray(result);
+                            for(int i=0;i<jsonArray.length();i++){
+                                obj = jsonArray.getJSONObject(i);
+                                filename=filename + obj.getString("name")+" ";
+
+                            }
+                        }catch (Exception e){
+                            e.printStackTrace();
+                        }
+                        mThumbIds = filename.split(" ");
                         update = true;
                     }
 
 
-                    return getBitmapFromURL("http://" + ip + "/" + mThumbIds[position]);
+                    return getBitmapFromURL("http://" + ip + "/"+dir + mThumbIds[position]);
                 }
 
                 @Override
@@ -189,9 +180,11 @@ public class GridViewActivity extends Activity {
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inJustDecodeBounds = false;
 //            options.inSampleSize = 5;
+//            File mediaStorageDir = new File(Environment.getDownloadCacheDirectory(), "SkyCam");
+//            FileOutputStream outputStream= new FileOutputStream()
+//            
 
             return BitmapFactory.decodeStream(input, null, options);
-//            return Bitmap.createBitmap();
 //            return BitmapFactory.decodeStream(input);
             //直接調用JNI>>nativeDecodeAsset()來完成decode，無需再使用java層的createBitmap，從而節省了java層的空間。
         } catch (IOException e) {
@@ -200,6 +193,7 @@ public class GridViewActivity extends Activity {
             return null;
         }
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
